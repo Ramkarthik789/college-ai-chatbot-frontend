@@ -12,6 +12,7 @@ function App() {
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/hod-dashboard" element={<HodDashboard />} />
         <Route path="/chatbot" element={<Chatbot />} />
+        <Route path="*" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
   );
