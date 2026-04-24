@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
 function StudentDashboard() {
@@ -7,6 +8,8 @@ function StudentDashboard() {
   const [attendance, setAttendance] = useState(null);
   const [fees, setFees] = useState(null);
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -23,40 +26,36 @@ function StudentDashboard() {
     const fetchUser = async () => {
       try {
         const res = await API.get("/me/", { headers });
-        console.log("ME RESPONSE:", res.data);
         setUser(res.data);
       } catch (err) {
-        console.error("ME ERROR:", err.response?.data || err.message);
+        console.error("ME ERROR:", err);
       }
     };
 
     const fetchCgpa = async () => {
       try {
         const res = await API.get("/my-cgpa", { headers });
-        console.log("CGPA RESPONSE:", res.data);
         setCgpa(res.data);
       } catch (err) {
-        console.error("CGPA ERROR:", err.response?.data || err.message);
+        console.error("CGPA ERROR:", err);
       }
     };
 
     const fetchAttendance = async () => {
       try {
         const res = await API.get("/my-attendance", { headers });
-        console.log("ATTENDANCE RESPONSE:", res.data);
         setAttendance(res.data);
       } catch (err) {
-        console.error("ATTENDANCE ERROR:", err.response?.data || err.message);
+        console.error("ATTENDANCE ERROR:", err);
       }
     };
 
     const fetchFees = async () => {
       try {
         const res = await API.get("/my-fees", { headers });
-        console.log("FEES RESPONSE:", res.data);
         setFees(res.data);
       } catch (err) {
-        console.error("FEES ERROR:", err.response?.data || err.message);
+        console.error("FEES ERROR:", err);
       }
     };
 
@@ -66,12 +65,29 @@ function StudentDashboard() {
     fetchFees();
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>🎓 Student Dashboard</h1>
 
       {error && <p style={styles.error}>{error}</p>}
 
+      {/* 🔥 Top Buttons */}
+      <div style={styles.topBar}>
+        <button style={styles.button} onClick={() => navigate("/chatbot")}>
+          🤖 Open Chatbot
+        </button>
+
+        <button style={styles.logoutButton} onClick={handleLogout}>
+          🚪 Logout
+        </button>
+      </div>
+
+      {/* Student Info */}
       <div style={styles.card}>
         <h2>Student Info</h2>
         <p><b>Name:</b> {user?.name || "Not Available"}</p>
@@ -80,6 +96,7 @@ function StudentDashboard() {
         <p><b>Branch:</b> {user?.branch || "Not Available"}</p>
       </div>
 
+      {/* Academic */}
       <div style={styles.card}>
         <h2>Academic Details</h2>
         <p><b>CGPA:</b> {cgpa?.cgpa ?? "Not Available"}</p>
@@ -87,11 +104,16 @@ function StudentDashboard() {
         <p><b>Semester:</b> {cgpa?.semester ?? "Not Available"}</p>
       </div>
 
+      {/* Attendance */}
       <div style={styles.card}>
         <h2>Attendance</h2>
-        <p><b>Attendance Percentage:</b> {attendance?.attendance_percentage ?? "Not Available"}%</p>
+        <p>
+          <b>Attendance Percentage:</b>{" "}
+          {attendance?.attendance_percentage ?? "Not Available"}%
+        </p>
       </div>
 
+      {/* Fees */}
       <div style={styles.card}>
         <h2>Fees</h2>
         <p><b>Total Fee:</b> ₹{fees?.total_fee ?? "Not Available"}</p>
@@ -110,6 +132,27 @@ const styles = {
   },
   heading: {
     marginBottom: "20px",
+  },
+  topBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "20px",
+  },
+  button: {
+    padding: "10px 18px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#2563eb",
+    color: "white",
+    cursor: "pointer",
+  },
+  logoutButton: {
+    padding: "10px 18px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#dc2626",
+    color: "white",
+    cursor: "pointer",
   },
   card: {
     backgroundColor: "white",
