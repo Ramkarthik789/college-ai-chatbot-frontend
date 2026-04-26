@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
 function HodDashboard() {
@@ -8,6 +9,8 @@ function HodDashboard() {
   const [lowAttendance, setLowAttendance] = useState([]);
   const [feeDefaulters, setFeeDefaulters] = useState([]);
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -21,68 +24,53 @@ function HodDashboard() {
       Authorization: `Bearer ${token}`,
     };
 
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
-        const res = await API.get("/me/", { headers });
-        console.log("HOD USER:", res.data);
-        setUser(res.data);
+        const userRes = await API.get("/me/", { headers });
+        setUser(userRes.data);
+
+        const summaryRes = await API.get("/dashboard/summary", { headers });
+        setSummary(summaryRes.data);
+
+        const topRes = await API.get("/dashboard/top-students?limit=5", { headers });
+        setTopStudents(topRes.data.top_students || []);
+
+        const lowRes = await API.get("/dashboard/low-attendance?threshold=75", { headers });
+        setLowAttendance(lowRes.data.students || []);
+
+        const feeRes = await API.get("/dashboard/fee-defaulters", { headers });
+        setFeeDefaulters(feeRes.data.students || []);
       } catch (err) {
-        console.error("HOD USER ERROR:", err.response?.data || err.message);
+        console.error("HOD DASHBOARD ERROR:", err);
+        setError("Failed to load HOD dashboard data");
       }
     };
 
-    const fetchSummary = async () => {
-      try {
-        const res = await API.get("/dashboard/summary", { headers });
-        console.log("SUMMARY:", res.data);
-        setSummary(res.data);
-      } catch (err) {
-        console.error("SUMMARY ERROR:", err.response?.data || err.message);
-      }
-    };
-
-    const fetchTopStudents = async () => {
-      try {
-        const res = await API.get("/dashboard/top-students?limit=5", { headers });
-        console.log("TOP STUDENTS:", res.data);
-        setTopStudents(res.data.top_students || []);
-      } catch (err) {
-        console.error("TOP STUDENTS ERROR:", err.response?.data || err.message);
-      }
-    };
-
-    const fetchLowAttendance = async () => {
-      try {
-        const res = await API.get("/dashboard/low-attendance?threshold=75", { headers });
-        console.log("LOW ATTENDANCE:", res.data);
-        setLowAttendance(res.data.students || []);
-      } catch (err) {
-        console.error("LOW ATTENDANCE ERROR:", err.response?.data || err.message);
-      }
-    };
-
-    const fetchFeeDefaulters = async () => {
-      try {
-        const res = await API.get("/dashboard/fee-defaulters", { headers });
-        console.log("FEE DEFAULTERS:", res.data);
-        setFeeDefaulters(res.data.students || []);
-      } catch (err) {
-        console.error("FEE DEFAULTERS ERROR:", err.response?.data || err.message);
-      }
-    };
-
-    fetchUser();
-    fetchSummary();
-    fetchTopStudents();
-    fetchLowAttendance();
-    fetchFeeDefaulters();
+    fetchData();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    navigate("/");
+  };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.heading}>📋 HOD Dashboard</h1>
 
       {error && <p style={styles.error}>{error}</p>}
+
+      <div style={styles.topBar}>
+        <button style={styles.button} onClick={() => navigate("/chatbot")}>
+          🤖 Open Chatbot
+        </button>
+
+        <button style={styles.logoutButton} onClick={handleLogout}>
+          🚪 Logout
+        </button>
+      </div>
 
       <div style={styles.card}>
         <h2>HOD Info</h2>
@@ -161,7 +149,32 @@ const styles = {
     minHeight: "100vh",
   },
   heading: {
+    textAlign: "center",
     marginBottom: "20px",
+  },
+  topBar: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "12px",
+    marginBottom: "20px",
+  },
+  button: {
+    padding: "10px 18px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#2563eb",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  logoutButton: {
+    padding: "10px 18px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#dc2626",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: "bold",
   },
   card: {
     backgroundColor: "white",
@@ -178,6 +191,7 @@ const styles = {
   },
   error: {
     color: "red",
+    textAlign: "center",
     marginBottom: "20px",
   },
 };
